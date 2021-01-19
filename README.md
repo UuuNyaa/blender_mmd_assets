@@ -1,0 +1,1 @@
+# blender_mmd_assets
