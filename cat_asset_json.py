@@ -46,15 +46,15 @@ def list_assets(session, repo):
         issue_body = issue_part['body']
         markdown_ast = ast_renderer.render(markdown_parser.parse(issue_body))
 
-        tags = [
-            tag for label, tag in issue_part['labels'].items()
+        tags = {
+            label: tag for label, tag in issue_part['labels'].items()
             if label not in [
                 'duplicate',
                 'enhancement',
                 'invalid',
                 'question',
             ] and (not label.startswith('type='))
-        ]
+        }
 
         types = [
             label[len('type='):] for label, tag in issue_part['labels'].items()
@@ -99,15 +99,15 @@ def list_assets(session, repo):
 
     return {
         'format': 'blender_mmd_assets:1',
-        'description': 'This file is release artifact of blender_mmd_assets',
+        'description': 'This file is a release asset of blender_mmd_assets',
         'license': 'CC-BY-4.0 License',
         'assets': assets,
     }
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print(f"ERROR: invalid arguments: {[a for a in sys.argv]}", file=sys.stderr)
+        print(f'ERROR: invalid arguments: {[a for a in sys.argv]}', file=sys.stderr)
         exit(1)
 
     token = os.environ.get('GITHUB_TOKEN')
