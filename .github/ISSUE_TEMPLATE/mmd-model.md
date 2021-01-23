@@ -1,8 +1,8 @@
 ---
 name: MMD Model
 about: For adding an asset
-title: "[English name] / [Native name]"
-labels: type=model_mmd
+title: "[English name]"
+labels: type=MODEL_MMD
 assignees: ''
 
 ---
@@ -18,5 +18,11 @@ path/to.pmx
 
 ## readme_path
 path/to/readme.txt
+
+## aliases
+| en | English name |
+|--|--|
+| zh | Chinese name |
+| ja | Japanese name |
 
 ## note
