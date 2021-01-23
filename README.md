@@ -42,21 +42,29 @@ print(assets_json)
   "format": "blender_mmd_assets:1",
   "description": "This file is a release asset of blender_mmd_assets",
   "license": "CC-BY-4.0 License",
+  "created_at": "yyyy-mm-ddTHH:MM:SSZ",
   "assets": [
     {
       "id": 99999,
       "type": "MODEL_MMD",
       "url": "https://api.github.com/repos/UuuNyaa/blender_mmd_assets/issues/99999",
-      "name": "English name / Native name",
+      "name": "English name",
       "tags": {
         "Male": "Male / 男性",
         "Official": "Official / 公式"
         ...
       },
+      "updated_at": "yyyy-mm-ddTHH:MM:SSZ",
       "thumbnail_url": "https://.../thumbnail.png",
       "download_url": "https://.../download_asset.zip",
       "content_path": "path/to.pmx",
       "readme_path": "path/to/readme.txt",
+      "aliases": {
+        "en": "English name",
+        "zh": "Chinese name",
+        "ja": "Japanese name",
+        ...
+      },
       "note": "Something note"
     },
     ...

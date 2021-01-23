@@ -4,12 +4,106 @@
 
 import json
 import os
+import re
 import sys
-from enum import Enum
+import datetime
 
 import requests
-from marko.ast_renderer import ASTRenderer
-from marko.parser import Parser
+
+
+def find_child_element(element, element_type):
+    for e in element['children']:
+        if e['element'] == element_type:
+            return e
+    return None
+
+
+def find_child_elements(element, element_type):
+    return [
+        e for e in element['children']
+        if e['element'] == element_type
+    ]
+
+
+class markdown:
+    @staticmethod
+    def parse_line(markdown_line):
+        # image
+        match = re.fullmatch(r'!\[([^\]]*)\]\((.*?)\s*("(?:.*[^"])")?\s*\)', markdown_line)
+        if match:
+            return {'type': 'image', 'markdown': markdown_line, 'alt': match.group(1), 'url': match.group(2)}
+
+        match = re.fullmatch(r'\|\s([^\|]+)\s\|\s([^\|]+)\s\|', markdown_line)
+        if match:
+            return {'type': 'alias', 'markdown': markdown_line, 'language': match.group(1), 'representation': match.group(2)}
+
+        return {'type': 'plain', 'markdown': markdown_line}
+
+    @staticmethod
+    def parse(markdown_text):
+        lines = []
+        root_block = {'header': '', 'depth': 0, 'lines': lines, 'children': []}
+        block_stack = [root_block]
+
+        def append_child(child_block):
+            block_stack[-1]['children'].append(child_block)
+            block_stack.append(child_block)
+
+        def remove_empty_lines(lines, line_number):
+            if len(lines) == 0:
+                return
+
+            while len(lines[line_number]['markdown'].strip()) == 0:
+                del lines[line_number]
+
+        for markdown_line in markdown_text.split('\n'):
+            markdown_line = markdown_line.rstrip()
+            if not markdown_line.startswith('#'):
+                lines.append(markdown.parse_line(markdown_line))
+                continue
+
+            match = re.fullmatch(r'^(#+)\s+(.+)$', markdown_line)
+            header_level = len(match.group(1))
+            header_text = match.group(2)
+
+            # remove head empty lines
+            remove_empty_lines(lines, +0)
+
+            # remove tail empty lines
+            remove_empty_lines(lines, -1)
+
+            if block_stack[-1]['depth'] >= header_level:
+                while block_stack[-1]['depth'] >= header_level:
+                    del block_stack[-1]
+            else:
+                while block_stack[-1]['depth'] + 1 < header_level:
+                    append_child({'header': '', 'depth': block_stack[-1]['depth'] + 1, 'lines': [], 'children': []})
+
+            lines = []
+            append_child({'header': header_text, 'depth': header_level, 'lines': lines, 'children': []})
+
+        return root_block
+
+    @staticmethod
+    def traverse_blocks(blocks):
+        yield blocks
+        for block in blocks['children']:
+            for child in markdown.traverse_blocks(block):
+                yield child
+
+    @staticmethod
+    def to_markdown(blocks):
+        result = ''
+        for block in markdown.traverse_blocks(blocks):
+            if block['header']:
+                if result:
+                    result += '\n'
+
+                result += f"{'#' * block['depth']} {block['header']}\n"
+            for line in block['lines']:
+                result += f"{line['markdown']}\n"
+
+        return result
 
 
 def list_assets(session, repo):
@@ -20,34 +114,23 @@ def list_assets(session, repo):
     )
     response.raise_for_status()
 
-    issues = reversed(json.loads(response.text))
-    issue_parts = [
+    issues = [
         {
             'url': issue['url'],
             'number': issue['number'],
             'title': issue['title'],
             'labels': {label['name']: label['description'] for label in issue['labels']},
             'body': issue['body'],
-        } for issue in issues
+            'updated_at': issue['updated_at'],
+        } for issue in reversed(json.loads(response.text))
     ]
 
-    def find_child_element(element, element_type):
-        for e in element['children']:
-            if e['element'] == element_type:
-                return e
-        return None
-
-    section = 'unknown'
-    markdown_parser = Parser()
-    ast_renderer = ASTRenderer()
-
     assets = []
-    for issue_part in issue_parts:
-        issue_body = issue_part['body']
-        markdown_ast = ast_renderer.render(markdown_parser.parse(issue_body))
+    for issue in issues:
+        blocks = markdown.parse(issue['body'])
 
         tags = {
-            label: tag for label, tag in issue_part['labels'].items()
+            label: tag for label, tag in issue['labels'].items()
             if label not in [
                 'duplicate',
                 'enhancement',
@@ -57,43 +140,32 @@ def list_assets(session, repo):
         }
 
         types = [
-            label[len('type='):] for label, tag in issue_part['labels'].items()
+            label[len('type='):] for label, tag in issue['labels'].items()
             if label.startswith('type=')
         ]
 
         if len(types) != 1:
-            print(f"WARN: invalid len(type)={len(types)}, number={issue_part['number']}", file=sys.stderr)
+            print(f"WARN: invalid len(type)={len(types)}, number={issue['number']}", file=sys.stderr)
 
         asset = {
-            'id': issue_part['number'],
+            'id': issue['number'],
             'type': types[0],
-            'url': issue_part['url'],
-            'name': issue_part['title'],
+            'url': issue['url'],
+            'name': issue['title'],
             'tags': tags,
+            'updated_at': issue['updated_at'],
         }
 
-        for element in markdown_ast['children']:
-            element_type = element['element']
-            if element_type == 'heading':
-                section = find_child_element(element, 'raw_text')['children']
-            elif element_type == 'paragraph':
-                if section == 'thumbnail_url':
-                    asset[section] = find_child_element(element, 'image')['dest']
-                else:
-                    asset[section] = find_child_element(element, 'raw_text')['children']
-
-        if 'note' not in asset:
-            asset['note'] = ''
-        else:
-            issule_body_lines = list(map(lambda l: l.rstrip(), issue_body.split('\n')))
-            note_header_index = next(iter([
-                index for index, line in enumerate(issule_body_lines)
-                if line.startswith('#') and ' note' in line
-            ]), None)
-            if note_header_index is not None:
-                asset['note'] = '\n'.join(issule_body_lines[note_header_index+1:])
-            else:
-                print(f"WARN: invalid note format, number={issue_part['number']}", file=sys.stderr)
+        for block in markdown.traverse_blocks(blocks):
+            if block['header'] == 'aliases':
+                asset['aliases'] = {
+                    line['language']: line['representation']
+                    for line in block['lines']
+                    if line['type'] == 'alias'
+                }
+            elif block['header']:
+                line = block['lines'][0]
+                asset[block['header']] = line['url'] if line['type'] == 'image' else line['markdown']
 
         assets.append(asset)
 
@@ -101,6 +173,7 @@ def list_assets(session, repo):
         'format': 'blender_mmd_assets:1',
         'description': 'This file is a release asset of blender_mmd_assets',
         'license': 'CC-BY-4.0 License',
+        'created_at': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         'assets': assets,
     }
 
