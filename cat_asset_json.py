@@ -2,11 +2,12 @@
 # Copyright 2021 UuuNyaa <UuuNyaa@gmail.com>
 # This file is part of blender_mmd_assets.
 
+import datetime
+import itertools
 import json
 import os
 import re
 import sys
-import datetime
 
 import requests
 
@@ -58,7 +59,9 @@ class markdown:
 
         for markdown_line in markdown_text.split('\n'):
             markdown_line = markdown_line.rstrip()
-            if not markdown_line.startswith('#'):
+            if markdown_line.startswith('```'):
+                continue
+            elif not markdown_line.startswith('#'):
                 lines.append(markdown.parse_line(markdown_line))
                 continue
 
@@ -106,24 +109,33 @@ class markdown:
         return result
 
 
-def list_assets(session, repo):
-    response = session.get(
-        f'https://api.github.com/repos/{repo}/issues',
-        params={'state': 'open'},
-        headers={'Accept': 'application/vnd.github.v3+json'}
-    )
-    response.raise_for_status()
+def list_assets(session, repo, query):
+    per_page = 100
+    issues = []
+    for page in itertools.count(1):
+        response = session.get(
+            f'https://api.github.com/repos/{repo}/issues',
+            params={**query, 'per_page': per_page, 'page': page},
+            headers={'Accept': 'application/vnd.github.v3+json'}
+        )
+        response.raise_for_status()
 
-    issues = [
-        {
-            'url': issue['url'],
-            'number': issue['number'],
-            'title': issue['title'],
-            'labels': {label['name']: label['description'] for label in issue['labels']},
-            'body': issue['body'],
-            'updated_at': issue['updated_at'],
-        } for issue in reversed(json.loads(response.text))
-    ]
+        fetche_issues = [
+            {
+                'url': issue['url'],
+                'number': issue['number'],
+                'title': issue['title'],
+                'labels': {label['name']: label['description'] for label in issue['labels']},
+                'body': issue['body'],
+                'updated_at': issue['updated_at'],
+            } for issue in json.loads(response.text)
+        ]
+        issues += fetche_issues
+
+        if len(fetche_issues) < per_page:
+            break
+
+    issues.reverse()
 
     assets = []
     for issue in issues:
@@ -148,7 +160,7 @@ def list_assets(session, repo):
             print(f"WARN: invalid len(type)={len(types)}, number={issue['number']}", file=sys.stderr)
 
         asset = {
-            'id': issue['number'],
+            'id': f"{issue['number']:05d}",
             'type': types[0],
             'url': issue['url'],
             'name': issue['title'],
@@ -165,15 +177,16 @@ def list_assets(session, repo):
                 }
             elif block['header']:
                 line = block['lines'][0]
-                asset[block['header']] = line['url'] if line['type'] == 'image' else line['markdown']
+                asset[block['header']] = line['url'] if line['type'] == 'image' else '\n'.join([line['markdown'] for line in block['lines']])
 
         assets.append(asset)
 
     return {
-        'format': 'blender_mmd_assets:1',
+        'format': 'blender_mmd_assets:2',
         'description': 'This file is a release asset of blender_mmd_assets',
         'license': 'CC-BY-4.0 License',
         'created_at': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'asset_count': len(assets),
         'assets': assets,
     }
 
@@ -188,4 +201,4 @@ if __name__ == '__main__':
 
     session = requests.Session()
     session.auth = (None, token)
-    print(json.dumps(list_assets(session, repo), indent=2, ensure_ascii=False))
+    print(json.dumps(list_assets(session, repo, {'state': 'open', 'labels': 'Official'}), indent=2, ensure_ascii=False))

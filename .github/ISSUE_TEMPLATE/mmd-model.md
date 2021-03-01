@@ -1,7 +1,7 @@
 ---
 name: MMD Model
 about: For adding an asset
-title: "[English name] / [Native name]"
+title: "[English name]"
 labels: type=model_mmd
 assignees: ''
 
@@ -13,10 +13,14 @@ assignees: ''
 ## download_url
 https://download_url.zip
 
-## content_path
-path/to.pmx
+## import_action
+```python
+unzip(f'{file}',encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)
+```
 
-## readme_path
-path/to/readme.txt
+## aliases
+| en | English name |
+|--|--|
+| ja | Japanese name |
 
 ## note

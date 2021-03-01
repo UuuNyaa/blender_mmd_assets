@@ -39,13 +39,14 @@ print(assets_json)
 ### Format of assets.json
 ```
 {
-  "format": "blender_mmd_assets:1",
+  "format": "blender_mmd_assets:2",
   "description": "This file is a release asset of blender_mmd_assets",
   "license": "CC-BY-4.0 License",
   "created_at": "yyyy-mm-ddTHH:MM:SSZ",
+  "asset_count": 9999,
   "assets": [
     {
-      "id": 99999,
+      "id": "99999",
       "type": "MODEL_MMD",
       "url": "https://api.github.com/repos/UuuNyaa/blender_mmd_assets/issues/99999",
       "name": "English name",
@@ -57,8 +58,7 @@ print(assets_json)
       "updated_at": "yyyy-mm-ddTHH:MM:SSZ",
       "thumbnail_url": "https://.../thumbnail.png",
       "download_url": "https://.../download_asset.zip",
-      "content_path": "path/to.pmx",
-      "readme_path": "path/to/readme.txt",
+      "import_action": "unzip(f'{file}',encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)",
       "aliases": {
         "en": "English name",
         "zh": "Chinese name",
