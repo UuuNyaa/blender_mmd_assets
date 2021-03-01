@@ -2,6 +2,7 @@
 # Copyright 2021 UuuNyaa <UuuNyaa@gmail.com>
 # This file is part of blender_mmd_assets.
 
+import ast
 import datetime
 import itertools
 import json
@@ -192,13 +193,19 @@ def list_assets(session, repo, query):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in {2, 3}:
         print(f'ERROR: invalid arguments: {[a for a in sys.argv]}', file=sys.stderr)
+        print('USAGE: python cat_asset_json.py REPO_USER/REPO_PATH [QUERY]')
         exit(1)
 
     token = os.environ.get('GITHUB_TOKEN')
     repo = sys.argv[1]
 
+    if len(sys.argv) == 3:
+        query = ast.literal_eval(sys.argv[2])
+    else:
+        query = {'state': 'open', 'labels': 'Official'}
+
     session = requests.Session()
     session.auth = (None, token)
-    print(json.dumps(list_assets(session, repo, {'state': 'open'}), indent=2, ensure_ascii=False))
+    print(json.dumps(list_assets(session, repo, query), indent=2, ensure_ascii=False))

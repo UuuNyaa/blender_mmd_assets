@@ -29,7 +29,7 @@ jobs:
 
     - name: Build asset
       run: |
-        python cat_asset_json.py UuuNyaa/blender_mmd_assets > assets.json
+        python cat_asset_json.py UuuNyaa/blender_mmd_assets "{'state': 'open'}" > assets.json
         zip -r -9 artifact.zip assets.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
