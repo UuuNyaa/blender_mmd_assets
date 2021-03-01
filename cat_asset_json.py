@@ -201,4 +201,4 @@ if __name__ == '__main__':
 
     session = requests.Session()
     session.auth = (None, token)
-    print(json.dumps(list_assets(session, repo, {'state': 'open', 'labels': 'Official'}), indent=2, ensure_ascii=False))
+    print(json.dumps(list_assets(session, repo, {'state': 'open'}), indent=2, ensure_ascii=False))
