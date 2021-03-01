@@ -23,10 +23,4 @@ unzip(f'{file}',encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)
 |--|--|
 | ja | Japanese name |
 
-## aliases
-| en | English name |
-|--|--|
-| zh | Chinese name |
-| ja | Japanese name |
-
 ## note
