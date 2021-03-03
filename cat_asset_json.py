@@ -13,20 +13,6 @@ import sys
 import requests
 
 
-def find_child_element(element, element_type):
-    for e in element['children']:
-        if e['element'] == element_type:
-            return e
-    return None
-
-
-def find_child_elements(element, element_type):
-    return [
-        e for e in element['children']
-        if e['element'] == element_type
-    ]
-
-
 class markdown:
     @staticmethod
     def parse_line(markdown_line):
@@ -110,7 +96,71 @@ class markdown:
         return result
 
 
-def list_assets(session, repo, query):
+def to_asset(issue):
+    blocks = markdown.parse(issue['body'])
+
+    tags = {
+        label: tag for label, tag in issue['labels'].items()
+        if label not in [
+            'duplicate',
+            'enhancement',
+            'invalid',
+            'question',
+        ] and (not label.startswith('type='))
+    }
+
+    types = [
+        label[len('type='):] for label, tag in issue['labels'].items()
+        if label.startswith('type=')
+    ]
+
+    if len(types) != 1:
+        print(f"WARN: invalid len(type)={len(types)}, number={issue['number']}", file=sys.stderr)
+
+    asset = {
+        'id': f"{issue['number']:05d}",
+        'type': types[0],
+        'url': issue['url'],
+        'name': issue['title'],
+        'tags': tags,
+        'updated_at': issue['updated_at'],
+    }
+
+    for block in markdown.traverse_blocks(blocks):
+        if block['header'] == 'aliases':
+            asset['aliases'] = {
+                line['language']: line['representation']
+                for line in block['lines']
+                if line['type'] == 'alias'
+            }
+        elif block['header']:
+            line = block['lines'][0]
+            asset[block['header']] = line['url'] if line['type'] == 'image' else '\n'.join([line['markdown'] for line in block['lines']])
+
+    return asset
+
+
+def to_summary_issue(raw_issue):
+    return {
+        'url': raw_issue['url'],
+        'number': raw_issue['number'],
+        'title': raw_issue['title'],
+        'labels': {label['name']: label['description'] for label in raw_issue['labels']},
+        'body': raw_issue['body'],
+        'updated_at': raw_issue['updated_at'],
+    }
+
+
+def fetch_issue(session, repo, issue_number):
+    response = session.get(
+        f'https://api.github.com/repos/{repo}/issues/{issue_number}',
+        headers={'Accept': 'application/vnd.github.v3+json'}
+    )
+    response.raise_for_status()
+    return to_summary_issue(json.loads(response.text))
+
+
+def fetch_issues(session, repo, query):
     per_page = 100
     issues = []
     for page in itertools.count(1):
@@ -121,67 +171,19 @@ def list_assets(session, repo, query):
         )
         response.raise_for_status()
 
-        fetche_issues = [
-            {
-                'url': issue['url'],
-                'number': issue['number'],
-                'title': issue['title'],
-                'labels': {label['name']: label['description'] for label in issue['labels']},
-                'body': issue['body'],
-                'updated_at': issue['updated_at'],
-            } for issue in json.loads(response.text)
+        summary_issues = [
+            to_summary_issue(issue) for issue in json.loads(response.text)
         ]
-        issues += fetche_issues
+        issues += summary_issues
 
-        if len(fetche_issues) < per_page:
+        if len(summary_issues) < per_page:
             break
 
     issues.reverse()
+    return issues
 
-    assets = []
-    for issue in issues:
-        blocks = markdown.parse(issue['body'])
 
-        tags = {
-            label: tag for label, tag in issue['labels'].items()
-            if label not in [
-                'duplicate',
-                'enhancement',
-                'invalid',
-                'question',
-            ] and (not label.startswith('type='))
-        }
-
-        types = [
-            label[len('type='):] for label, tag in issue['labels'].items()
-            if label.startswith('type=')
-        ]
-
-        if len(types) != 1:
-            print(f"WARN: invalid len(type)={len(types)}, number={issue['number']}", file=sys.stderr)
-
-        asset = {
-            'id': f"{issue['number']:05d}",
-            'type': types[0],
-            'url': issue['url'],
-            'name': issue['title'],
-            'tags': tags,
-            'updated_at': issue['updated_at'],
-        }
-
-        for block in markdown.traverse_blocks(blocks):
-            if block['header'] == 'aliases':
-                asset['aliases'] = {
-                    line['language']: line['representation']
-                    for line in block['lines']
-                    if line['type'] == 'alias'
-                }
-            elif block['header']:
-                line = block['lines'][0]
-                asset[block['header']] = line['url'] if line['type'] == 'image' else '\n'.join([line['markdown'] for line in block['lines']])
-
-        assets.append(asset)
-
+def wrap_assets(assets):
     return {
         'format': 'blender_mmd_assets:2',
         'description': 'This file is a release asset of blender_mmd_assets',
@@ -190,6 +192,38 @@ def list_assets(session, repo, query):
         'asset_count': len(assets),
         'assets': assets,
     }
+
+
+def fetch_asset(session, repo, issue_number):
+    return to_asset(
+        fetch_issue(session, repo, issue_number)
+    )
+
+
+def fetch_assets(session, repo, query):
+    issues = fetch_issues(session, repo, query)
+
+    assets = []
+    for issue in issues:
+        asset = to_asset(issue)
+
+        def check(property: str) -> bool:
+            if property in asset:
+                return True
+
+            print(f'ERROR: {property} not found', file=sys.stderr)
+            return False
+
+        if all([
+            check('thumbnail_url'),
+            check('download_url'),
+            check('import_action'),
+            check('aliases'),
+            check('note'),
+        ]):
+            assets.append(asset)
+
+    return assets
 
 
 if __name__ == '__main__':
@@ -208,4 +242,4 @@ if __name__ == '__main__':
 
     session = requests.Session()
     session.auth = (None, token)
-    print(json.dumps(list_assets(session, repo, query), indent=2, ensure_ascii=False))
+    print(json.dumps(wrap_assets(fetch_assets(session, repo, query)), indent=2, ensure_ascii=False))

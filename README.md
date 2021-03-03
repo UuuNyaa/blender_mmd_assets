@@ -58,7 +58,7 @@ print(assets_json)
       "updated_at": "yyyy-mm-ddTHH:MM:SSZ",
       "thumbnail_url": "https://.../thumbnail.png",
       "download_url": "https://.../download_asset.zip",
-      "import_action": "unzip(f'{file}',encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)",
+      "import_action": "unzip(encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)",
       "aliases": {
         "en": "English name",
         "zh": "Chinese name",

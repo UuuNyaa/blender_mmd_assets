@@ -15,7 +15,7 @@ https://download_url.zip
 
 ## import_action
 ```python
-unzip(f'{file}',encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)
+unzip(encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)
 ```
 
 ## aliases
