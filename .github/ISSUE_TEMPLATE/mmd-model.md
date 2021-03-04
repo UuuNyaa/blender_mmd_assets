@@ -2,7 +2,7 @@
 name: MMD Model
 about: For adding an asset
 title: "[English name]"
-labels: type=MODEL_MMD
+labels: help=Author Unknown, help=Scale Unknown, type=MODEL_MMD
 assignees: ''
 
 ---
