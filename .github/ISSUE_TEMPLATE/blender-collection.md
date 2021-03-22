@@ -1,8 +1,8 @@
 ---
-name: MMD Model
-about: For adding an asset
-title: English name
-labels: help=Author Unknown, help=Scale Unknown, type=MODEL_MMD
+name: Blender Collection
+about: For adding a Blender collection
+title: ''
+labels: type=MODEL_BLENDER
 assignees: ''
 
 ---
@@ -15,7 +15,7 @@ https://download_url.zip
 
 ## import_action
 ```python
-unzip(encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)
+unzip(encoding='cp932'); import_collection('path/to.blend','collection name')
 ```
 
 ## aliases
