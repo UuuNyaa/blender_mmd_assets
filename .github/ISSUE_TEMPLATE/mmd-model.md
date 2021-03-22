@@ -10,8 +10,10 @@ assignees: ''
 ## thumbnail_url
 ![thumbnail_url](https://thumbnail_url.png)
 
-## download_url
-https://download_url.zip
+## download_action
+```python
+get('https://download_url.zip')
+```
 
 ## import_action
 ```python
