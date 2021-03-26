@@ -1,11 +1,8 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - "!*"
-    tags:
-      - "v*"
+  issues:
+    types: [ opened, edited, deleted, closed, reopened, labeled, unlabeled, milestoned, demilestoned ]
 
   workflow_dispatch:
 
@@ -40,17 +37,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: true
+        tag_name: ${{ github.run_number }}
+        release_name: Release ${{ github.run_number }}
+        draft: false
         prerelease: false
-
-    - name: Branch name
-      id: branch_name
-      run: |
-        echo ::set-output name=name::${GITHUB_REF#refs/*/}
-        echo ::set-output name=branch::${GITHUB_REF#refs/heads/}
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
 
     - name: Upload Release Asset
       id: upload-release-asset 
@@ -60,5 +50,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./artifact.zip
-        asset_name: blender_mmd_assets-${{ steps.branch_name.outputs.tag }}.zip
+        asset_name: blender_mmd_assets-${{ github.run_number }}.zip
         asset_content_type: application/zip
