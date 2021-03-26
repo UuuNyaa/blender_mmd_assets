@@ -39,7 +39,7 @@ print(assets_json)
 ### Format of assets.json
 ```
 {
-  "format": "blender_mmd_assets:2",
+  "format": "blender_mmd_assets:3",
   "description": "This file is a release asset of blender_mmd_assets",
   "license": "CC-BY-4.0 License",
   "created_at": "yyyy-mm-ddTHH:MM:SSZ",
@@ -57,7 +57,7 @@ print(assets_json)
       },
       "updated_at": "yyyy-mm-ddTHH:MM:SSZ",
       "thumbnail_url": "https://.../thumbnail.png",
-      "download_url": "https://.../download_asset.zip",
+      "download_action": "get('https://.../download_asset.zip')",
       "import_action": "unzip(encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)",
       "aliases": {
         "en": "English name",
