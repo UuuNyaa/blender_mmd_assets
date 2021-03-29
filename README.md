@@ -57,6 +57,7 @@ print(assets_json)
       },
       "updated_at": "yyyy-mm-ddTHH:MM:SSZ",
       "thumbnail_url": "https://.../thumbnail.png",
+      "source_url": "https://.../distribution/source/url",
       "download_action": "get('https://.../download_asset.zip')",
       "import_action": "unzip(encoding='cp932'); import_pmx('path/to.pmx',scale=0.08)",
       "aliases": {
@@ -74,6 +75,8 @@ print(assets_json)
 
 #### Types
 - MODEL_MMD
+- MOTION_MMD
+- POSE_MMD
 - MODEL_BLENDER
 
 #### Tags
