@@ -10,6 +10,9 @@ assignees: ''
 ## thumbnail_url
 ![thumbnail_url](https://thumbnail_url.png)
 
+## source_url
+https://distribution/source/url
+
 ## download_action
 ```python
 get('https://download_url.zip')
