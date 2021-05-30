@@ -78,6 +78,7 @@ print(assets_json)
 - MOTION_MMD
 - POSE_MMD
 - MODEL_BLENDER
+- WORLD_BLENDER
 
 #### Tags
 - See [issue labels](https://github.com/UuuNyaa/blender_mmd_assets/labels)
