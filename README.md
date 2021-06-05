@@ -74,11 +74,11 @@ print(assets_json)
 ```
 
 #### Types
-- MODEL_MMD
-- MOTION_MMD
+- [MODEL_MMD](https://github.com/UuuNyaa/blender_mmd_assets/labels/type%3DMODEL_MMD)
+- [MOTION_MMD](https://github.com/UuuNyaa/blender_mmd_assets/labels/type%3DMOTION_MMD)
 - POSE_MMD
-- MODEL_BLENDER
-- WORLD_BLENDER
+- [MODEL_BLENDER](https://github.com/UuuNyaa/blender_mmd_assets/labels/type%3DMODEL_BLENDER)
+- [WORLD_BLENDER](https://github.com/UuuNyaa/blender_mmd_assets/labels/type%3DWORLD_BLENDER)
 
 #### Tags
 - See [issue labels](https://github.com/UuuNyaa/blender_mmd_assets/labels)
