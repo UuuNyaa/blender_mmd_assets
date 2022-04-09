@@ -20,7 +20,7 @@ get('https://download_url.zip')
 
 ## import_action
 ```python
-unzip(encoding='cp932'); import_collection('path/to.blend','collection name')
+unzip(encoding='cp932'); import_collections('path/to.blend','collection name')
 ```
 
 ## aliases
