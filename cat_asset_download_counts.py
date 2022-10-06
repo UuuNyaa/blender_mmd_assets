@@ -35,4 +35,4 @@ if __name__ == '__main__':
     repo = sys.argv[1]
 
     session = requests.Session()
-    print(json.dumps(list_asset_download_counts(session, repo), indent=2, ensure_ascii=False))
+    print(json.dumps(list(reversed(list_asset_download_counts(session, repo))), indent=2, ensure_ascii=False))
